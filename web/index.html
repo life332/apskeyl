@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<title>💎 Апскейл</title>
+<link rel="stylesheet" href="/static/app.css?v=28">
+</head>
+<body>
+<!-- власний заголовок вікна (безрамкове вікно: без системної рамки і значка пітона) -->
+<div id="titlebar">
+  <div class="pywebview-drag-region tb-drag"><span class="tb-title" data-i18n="app_name">💎 Апскейл</span></div>
+  <button class="tbbtn" id="tbMin" title="Згорнути">─</button>
+  <button class="tbbtn" id="tbMax" title="На весь екран">☐</button>
+  <button class="tbbtn close" id="tbClose" title="Закрити">✕</button>
+</div>
+<div id="app">
+  <!-- рейл -->
+  <nav id="rail">
+    <button class="railbtn active" data-tab="lib" data-i18n-title="tab_lib" title="Бібліотека">📚</button>
+    <button class="railbtn" data-tab="queue" data-i18n-title="tab_queue" title="Черга">⏳<span id="qbadge" class="rbadge hidden"></span></button>
+    <button class="railbtn" data-tab="done" data-i18n-title="tab_done" title="Готове">✅</button>
+    <!-- Етап 6 п.1-3: розвідник нових моделей (замовлення власника 08.09) -->
+    <button class="railbtn" data-tab="scout" data-i18n-title="tab_scout" title="Моделі">🧭<span id="sbadge" class="rbadge hidden"></span></button>
+    <div class="railspace"></div>
+    <button class="railbtn" data-tab="settings" data-i18n-title="tab_settings" title="Налаштування">🛠</button>
+  </nav>
+
+  <!-- центр -->
+  <main id="center">
+    <header id="topbar">
+      <button id="btnAdd" class="btn primary" data-i18n="add_video">＋ Додати відео</button>
+      <!-- «Приймальня» (тека <дані>\inbox) прибрана з очей за проханням власника 28.08;
+           API /api/scan_inbox лишається для автоматизації -->
+      <button id="btnInbox" class="btn ghost hidden" title="Підхопити все з теки inbox у теці даних">📥 Приймальня</button>
+      <span id="counter" class="dim mono"></span>
+      <input id="search" type="search" data-i18n-ph="search_ph" placeholder="🔍 пошук у розділі…" autocomplete="off">
+      <span class="flex1"></span>
+      <span id="diskbadge" class="badge mono" title="Вільно на A:"></span>
+      <span id="gpubadge" class="badge mono hidden">GPU: зайнятий іншим realesrgan</span>
+    </header>
+
+    <section id="tab-lib" class="tab active">
+      <div id="dropzone" class="hidden-when-full">
+        <div class="dz-inner">
+          <div class="dz-icon">🎬</div>
+          <div><span data-i18n="dz_title">кинь відео сюди</span><br><span class="dim" data-i18n="dz_sub">або тисни «＋ Додати відео»</span></div>
+        </div>
+      </div>
+      <div id="grid"></div>
+    </section>
+
+    <section id="tab-queue" class="tab">
+      <div id="queueList" class="joblist"></div>
+      <div id="queueEmpty" class="stub empty-stub"><span data-i18n="queue_empty">⏳ Черга порожня. Обери відео → УЛУЧШИ → 🚀 Покращити відео.</span><br>
+        <span class="dim" data-i18n="queue_empty_sub">Вікно можна закривати — рахунок іде у фоні, ПК не засне, поки не дорахує.</span></div>
+    </section>
+    <section id="tab-done" class="tab">
+      <div id="doneList" class="joblist"></div>
+      <div id="doneEmpty" class="stub empty-stub"><span data-i18n="done_empty">✅ Ще нічого не готове. Результати лягають у</span> <span class="mono" id="doneDir">…\out</span>.</div>
+    </section>
+    <!-- 🧭 РОЗВІДНИК: каталог OpenModelDB, оновлюється сам раз на 4 дні -->
+    <section id="tab-scout" class="tab">
+      <!-- ОДИН ряд (власник 08.09, третя ітерація: «зроби панель нормальною»): зліва сегмент
+           усі / одним кліком / нові + два селекти з підписами, справа статус і кнопка-іконка 🔄.
+           Попередні варіанти: flex-стрічка з розпіркою («нелогічно мігрують») і два рядки
+           з перемикачами («дуже хріново виглядить») -->
+      <div id="scoutBar">
+        <div class="scseg" id="scAvailSeg">
+          <button class="scsegbtn" data-v="all" data-i18n="sc_seg_all">усі</button>
+          <button class="scsegbtn active" data-v="usable" data-i18n="sc_seg_usable">можна скачати</button>
+          <button class="scsegbtn" data-v="new" data-i18n="sc_seg_new">нові</button>
+          <button class="scsegbtn" data-v="installed" data-i18n="sc_seg_installed">скачані</button>
+        </div>
+        <select id="scScale"><option value="0" data-i18n="sc_any_scale">масштаб: будь-який</option>
+          <option value="1">×1</option><option value="2">×2</option><option value="3">×3</option>
+          <option value="4">×4</option><option value="8">×8</option></select>
+        <select id="scPurpose"><option value="" data-i18n="sc_any_purpose">призначення: будь-яке</option>
+          <option value="реальне">🎬 реальне відео</option>
+          <option value="універсальна">🎬 універсальна</option>
+          <option value="мальоване">🎨 мальоване/аніме</option>
+          <option value="обличчя">🙂 обличчя</option>
+          <option value="стиснення">🧹 прибирає стиснення</option>
+          <option value="реставрація">🛠 реставрація</option>
+          <option value="текст">🔤 текст і скани</option>
+          <option value="ігрові">🎮 ігрові текстури</option></select>
+        <select id="scSort"><option value="new" data-i18n="sc_sort_new">спочатку нові</option>
+          <option value="quality" data-i18n="sc_sort_quality">за класом якості</option>
+          <option value="speed" data-i18n="sc_sort_speed">за швидкістю</option>
+          <option value="name" data-i18n="sc_sort_name">за назвою</option></select>
+        <span class="dim mono" id="scState"></span>
+        <button class="btn ghost" id="scRefresh" data-i18n-title="sc_refresh" title="🔄 Перевірити зараз">🔄</button>
+      </div>
+      <!-- повноекранна картка моделі (власник 08.09: «подвійний клік відкриває на весь екран
+           з подробним описом»): опис мовою інтерфейсу (Ollama, кеш), приклади поруч, дії зверху -->
+      <div id="scFull" class="hidden">
+        <div class="sfhead">
+          <button class="btn ghost" id="sfClose" data-i18n="sc_full_close">✕ закрити</button>
+          <span class="sfname" id="sfName"></span><span id="sfBadges" class="sfbadges"></span>
+          <span class="flex1"></span><span id="sfActs" class="scacts"></span>
+        </div>
+        <div class="sfnote dim" id="sfNote"></div>
+        <div class="sfbody" id="sfBody">
+          <div class="sfdesc" id="sfDesc"></div>
+          <div class="sfimgs" id="sfImgs"></div>
+        </div>
+        <div class="sfmeta" id="sfMeta"></div>
+        <div class="scpurpose" id="sfTags"></div>
+      </div>
+      <div id="scoutList" class="scgrid"></div>
+      <div id="scoutMore" class="hidden"><button class="btn ghost" id="scMore" data-i18n="sc_more">показати ще</button></div>
+      <div id="scoutEmpty" class="stub empty-stub"><span data-i18n="sc_empty">🧭 Каталог ще не завантажено. Тисни «🔄 Перевірити зараз» — це 1.2 МБ і кілька секунд.</span></div>
+    </section>
+    <section id="tab-settings" class="tab"><div class="stub" id="settingsBody">
+      <h3 style="margin-bottom:12px" data-i18n="st_title">🛠 Налаштування</h3>
+      <!-- секцію «Двигун» (ефір має пріоритет / потоки / тайл) прибрано за проханням власника 28.08:
+           «модуль зайвий, хай працює на всю». Ключі лишились у settings.json для ручного керування. -->
+      <!-- модель/ціль/кодек тут НЕ дублюються (власник 28.08): вибір збоку запам'ятовується сам -->
+      <!-- Етап 6 п.4: ПУЛ МОДЕЛЕЙ — звідси будується меню «ЯК» -->
+      <div class="setgrp"><span data-i18n="st_grp_models">МОДЕЛІ</span>
+        <span class="dim" data-i18n="st_models_sub">— що показувати в меню «ЯК»</span></div>
+      <div id="poolList" class="poollist"></div>
+      <div class="setrow"><span class="lbl" data-i18n="st_pool_disk">Файли моделей</span>
+        <div class="ctl"><span class="mono dim" id="poolSize"></span>
+          <button class="btn ghost" id="stPoolReset" data-i18n="st_pool_reset">↩ Повернути дефолт</button></div>
+        <div class="note" data-i18n="st_pool_note">🗑 прибирає файли з диска назавжди; базові моделі з архіву рушія повертаються при старті — їх ховай перемикачем</div></div>
+      <!-- 📏 проба якості: «⭐ ×N краще за мультяшну» заміряно LPIPS на кадрах власника (app/quality.py) -->
+      <div class="setrow"><span class="lbl" data-i18n="st_quality_lbl">Якість моделей</span>
+        <div class="ctl"><button class="btn ghost" id="stQuality" data-i18n="st_quality">📏 Доміряти</button>
+          <button class="btn ghost" id="stQualityAll" data-i18n="st_quality_all">🔁 Переміряти всі</button>
+          <span class="mono dim" id="qualState"></span></div>
+        <div class="note" data-i18n="st_quality_note">LPIPS: кожну модель женемо 1080p→4K на кадрах з твоєї бібліотеки і порівнюємо з оригіналом. ⭐ ×N = у стільки разів ближче до оригіналу, ніж мультяшна</div></div>
+      <div class="setgrp" data-i18n="st_grp_ui">ІНТЕРФЕЙС</div>
+      <div class="setrow"><span class="lbl" data-i18n="st_lang">Мова</span>
+        <div class="ctl"><select id="stLang"><option value="uk">Українська</option><option value="ru">Русский</option><option value="en">English</option></select></div>
+        <div class="note" data-i18n="st_lang_note">повідомлення движка (прогнози, причини) — українською</div></div>
+      <div class="setgrp" data-i18n="st_grp_files">ФАЙЛИ</div>
+      <div class="setrow"><span class="lbl" data-i18n="st_out">Тека результатів</span>
+        <div class="ctl"><input type="text" id="stOutDir" placeholder="…\out">
+          <button class="btn ghost" id="stPickOut" data-i18n="st_pick">📁 Обрати…</button>
+          <button class="btn ghost" id="stOpenOut" data-i18n="st_open">📂 Відкрити</button></div></div>
+      <div class="setrow"><span class="lbl" data-i18n="st_tmp">Тимчасові файли</span>
+        <div class="ctl"><span class="mono dim" id="stTmp"></span>
+          <button class="btn ghost" id="stCleanup" data-i18n="st_cleanup">🧹 Очистити</button>
+          <button class="btn ghost" id="stLogs" data-i18n="st_logs">📄 Логи</button></div></div>
+      <div class="setsave"><button class="btn primary" id="stSave" data-i18n="st_save">💾 Зберегти</button>
+        <span class="dim" id="stAbout">· :8391 · realesrgan-ncnn-vulkan (-g 0)</span></div>
+    </div></section>
+  </main>
+
+  <!-- права панель -->
+  <aside id="panel" class="empty">
+    <div id="panelEmpty" data-i18n="panel_empty">обери відео зліва</div>
+    <div id="panelBody" class="hidden">
+      <div id="pvWrap"><img id="pv" alt=""></div>
+      <div id="passport" class="mono"></div>
+      <div id="recbox"></div>
+      <button id="btnImprove" class="btn improve" data-i18n="improve">✨ УЛУЧШИ</button>
+
+      <div id="menu" class="hidden">
+        <div class="mtitle" data-i18n="what">ЩО</div>
+        <div id="tiles"></div>
+        <div class="mtitle"><span data-i18n="how">ЯК</span> <span class="dim" data-i18n="how_sub">— модель</span></div>
+        <!-- Етап 6 п.4: список будується з ПУЛУ (<дані>\models\pool.json), а не руками.
+             Що показувати, в якій групі, в якому порядку і як підписано — 🛠 → МОДЕЛІ.
+             Чіп справа = у скільки разів повільніша за найшвидшу, рахується з ЗАМІРІВ
+             (calib.json), а не з рук: 28.08 тут стояло ×20/×3/×1, факт дав ×17/×2/×1. -->
+        <div id="models" class="mlist"></div>
+        <div class="mtitle"><span data-i18n="extra">ДОДАТКОВО</span> <span class="dim" data-i18n="extra_sub">— діє і на пробу, і на рендер</span></div>
+        <div id="ops" class="opsgrid">
+          <div class="oplabel" data-i18n="op_sharpen">🔪 Різкість після</div>
+          <div class="opctl"><input type="range" id="opSharpen" min="0" max="1" step="0.1" value="0">
+            <span id="opSharpenV" class="mono">0</span></div>
+          <div class="oplabel" data-i18n="op_grain">🎞 Кінозерно</div>
+          <div class="opctl"><label class="switch"><input type="checkbox" id="opGrain"><span class="knob"></span></label>
+            <span class="dim" data-i18n="op_grain_d">маскує «пластилін»</span></div>
+          <div class="oplabel" data-i18n="op_denoise">🧹 Денойз перед</div>
+          <div class="opctl"><label class="switch"><input type="checkbox" id="opDenoise"><span class="knob"></span></label>
+            <span class="dim" data-i18n="op_denoise_d">для пожатого джерела</span></div>
+          <div class="oplabel" data-i18n="op_codec">💾 Кодек</div>
+          <div class="opctl seg">
+            <label class="segbtn"><input type="radio" name="codec" value="libx264" checked><span data-i18n="codec_q">🎯 Якість</span></label>
+            <label class="segbtn"><input type="radio" name="codec" value="hevc_nvenc"><span data-i18n="codec_f">⚡ Швидко</span></label>
+            <span class="dim segnote" id="codecNote">H.264, crf16</span>
+          </div>
+        </div>
+        <div class="mtitle"><span data-i18n="scene">СЦЕНА ДЛЯ ПРОБИ</span> <span class="dim" data-i18n="scene_sub">(артефакти видно на русі — дефолт: найдинамічніша)</span></div>
+        <div id="scrub">
+          <img id="scrubImg" alt="">
+          <input type="range" id="scrubT" min="0" max="100" step="0.1" value="0">
+          <div class="mono dim" id="scrubLabel"></div>
+        </div>
+        <div id="forecast" class="mono"></div>
+        <div id="runrow">
+          <button id="btnProbe1" class="btn primary" data-i18n="probe1">👁 1 кадр (~5 с)</button>
+          <button id="btnProbe10" class="btn ghost" disabled data-i18n-title="probe10_t" title="10 с руху: мерехтіння видно лише у відео">🎬 10 секунд</button>
+          <button id="btnQueue" class="btn primary" data-i18n="enqueue" data-i18n-title="enqueue_t" title="Порахувати все відео у фоні (вкладка ⏳)">🚀 Покращити відео</button>
+        </div>
+      </div>
+    </div>
+  </aside>
+</div>
+
+<!-- порівняння ДО/ПІСЛЯ -->
+<div id="compare" class="hidden">
+  <div id="cmpStage">
+    <img id="cmpAfter" alt="після">
+    <video id="cmpAfterV" muted loop playsinline preload="auto"></video>
+    <div id="cmpBeforeWrap"><img id="cmpBefore" alt="до">
+      <video id="cmpBeforeV" muted loop playsinline preload="auto"></video></div>
+    <div id="cmpLine"></div>
+    <div id="cmpTagB" class="cmptag" data-i18n="tag_before">ДО</div>
+    <div id="cmpTagA" class="cmptag" data-i18n="tag_after">ПІСЛЯ</div>
+  </div>
+  <div id="cmpBar">
+    <span id="cmpMode" class="mono dim"></span>
+    <button id="btnHold" class="btn ghost" data-i18n="cmp_hold">👁 Тримай = ДО</button>
+    <button id="btn11" class="btn ghost">🔍 1:1</button>
+    <button id="btnPlay" class="btn ghost hidden" data-i18n="cmp_pause">⏸ Пауза</button>
+    <span id="cmpClock" class="mono dim hidden"></span>
+    <span class="dim" data-i18n="cmp_hint">тягни лінію · затисни кнопку/пробіл = ДО · Esc — вийти</span>
+    <span class="flex1"></span>
+    <button id="btnCmpClose" class="btn" data-i18n="cmp_close">✕ Закрити</button>
+  </div>
+</div>
+
+<!-- власне підтвердження по центру: системний confirm() у WebView2 липне до верхньої грані (власник 08.09) -->
+<div id="confirmBox" class="hidden"><div class="cbox"><div id="confirmText" class="ctext"></div>
+  <div class="cbtns"><button class="btn ghost" id="confirmNo" data-i18n="c_no">Ні</button>
+  <button class="btn primary" id="confirmYes" data-i18n="c_yes">Так</button></div></div></div>
+<div id="toasts"></div>
+<div id="busy" class="hidden"><div class="spin"></div><div id="busyText">рахую…</div>
+  <div id="busyBar" class="hidden"><div id="busyFill"></div></div>
+  <button id="busyCancel" class="btn hidden">✕ Скасувати</button></div>
+<script src="/static/app.js?v=28"></script>
+</body>
+</html>
