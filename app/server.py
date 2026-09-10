@@ -84,7 +84,8 @@ async def _touch(request, call_next):
 
 @app.get("/api/whoami")
 def whoami():
-    return {"app": config.APP_NAME, "pid": os.getpid(), "port": config.PORT}
+    from version import __version__
+    return {"app": config.APP_NAME, "version": __version__, "pid": os.getpid(), "port": config.PORT}
 
 
 @app.get("/api/health")

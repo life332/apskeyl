@@ -2,6 +2,12 @@
 
 **English** · [Русский](README.md)
 
+[![status: alpha](https://img.shields.io/badge/status-alpha-orange)](CHANGELOG.md)
+[![Windows 10/11](https://img.shields.io/badge/Windows-10%20%7C%2011-0078D6?logo=windows)](#install)
+[![Python 3.11+](https://img.shields.io/badge/Python-3.11%2B-3776AB?logo=python&logoColor=white)](#install)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Changelog](https://img.shields.io/badge/changelog-Keep%20a%20Changelog-E05735)](CHANGELOG.md)
+
 > **Alpha.** Used daily by the author on Windows, but it is a manual install and may break
 > on your hardware. Bugs and requests → [Issues](https://github.com/life332/apskeyl/issues).
 
